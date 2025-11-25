@@ -426,9 +426,9 @@ const BOOL BonDriver::SetChannel(const DWORD dwSpace, const DWORD dwChannel)
 		PLOGD << "tsthread_start";
 	}
 
-	// 安定してストリームが転送されるまで初期のストリームを捨てる
-	// 破棄したストリームの合計がrequired_purge_stream_以上になるか
-	// 破棄する時間がtimeout_purge_stream_を超えた場合は処理を中断
+	// 安定してストリームが転送されるようになるまでの初期ストリームを捨てる処理
+	// 破棄したストリームの累計がrequired_purge_size以上になるか、経過時間が
+	// timeout_purge_streamを超えた場合に終了する
 	if (timeout_purge_stream_ > 0) {
 		auto now = std::chrono::steady_clock::now();
 		auto timeout = now + std::chrono::milliseconds(timeout_purge_stream_);
