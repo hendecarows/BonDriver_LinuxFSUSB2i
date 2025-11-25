@@ -21,6 +21,7 @@ git, cmakeを含むビルドツールをインストールした状態でビル�
 
 ```console
 git clone https://github.com/hendecarows/BonDriver_LinuxFSUSB2i.git
+git submodule update --init --recursive
 cd BonDriver_LinuxFSUSB2i
 mkdir build
 cd build
