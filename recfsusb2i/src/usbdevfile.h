@@ -7,5 +7,7 @@
 #include "types_u.h"
 
 HANDLE usbdevfile_alloc(int (*check_func)(const unsigned int*), char** const pdevfile);
+HANDLE usbdevfile_alloc_vid_pid(unsigned short *vids_vids, size_t size);
+HANDLE usbdevfile_alloc_devfile(const char *devfile);
 
 /*EOF*/

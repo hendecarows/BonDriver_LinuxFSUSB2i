@@ -151,4 +151,89 @@ endcheck_usbdevfile:
 	return -1;
 }
 
+HANDLE usbdevfile_alloc_vid_pid(unsigned short *vids_pids, size_t size)
+{
+#define MAX_DEPTH_DIR  2
+	DIR *dp[MAX_DEPTH_DIR];
+	int depth, dirpath_len;
+	char dirpath[PATH_MAX];
+	int i, count;
+
+	strcpy(dirpath, BASE_DIR_UDEV);
+	dirpath_len = strlen(BASE_DIR_UDEV);
+	dp[0] = NULL;
+	depth = 0;
+	while(0 <= depth) {
+		if(NULL == dp[depth]) {
+			dp[depth] = opendir(dirpath);
+		}
+		if(NULL == dp[depth]) {
+			warn_info(0,"failed to opendir '%s'", dirpath);
+			depth--;
+			continue;
+		}
+		struct dirent *dentry;
+		while((dentry = readdir(dp[depth])) != NULL) {
+			if(DT_CHR == dentry->d_type) {
+				//# found USB devfile
+				const int r = path_strcat(dirpath, dirpath_len, dentry->d_name, sizeof(dirpath));
+				if(0 > r)
+					goto endcheck_usbdevfile;    //# buffer overflow check
+
+				struct usb_device_descriptor  desc;
+				if(usb_getdesc(dirpath, &desc) != 0)
+					goto endcheck_usbdevfile;
+				count = 0;
+				for(i = 0; i < size; i += 2) {
+					if(desc.idVendor == vids_pids[i] && desc.idProduct == vids_pids[i+1]) {
+						count++;
+					}
+				}
+				if (count == 0) {
+					goto endcheck_usbdevfile;
+				}
+				HANDLE fd = usb_open(dirpath);
+				if(0 <= fd) {
+					//# usb_open success
+					return fd;
+				}
+endcheck_usbdevfile:
+				dirpath[dirpath_len] = 0;
+
+			}else if(MAX_DEPTH_DIR -1 > depth && DT_DIR == dentry->d_type) {
+				if(strcmp(dentry->d_name,".") == 0 || strcmp(dentry->d_name,"..") == 0) {
+					//# self or parent directory, skip
+					continue;
+				}
+				const int len = path_strcat(dirpath, dirpath_len, dentry->d_name, sizeof(dirpath));
+				if(0 <= len) {    //# buffer overflow check
+					dirpath_len = len;
+					dp[++depth] = NULL;
+					break;
+				}
+			}
+		}
+		if(NULL == dentry) {
+			//# end of directory stream
+			closedir(dp[depth]);
+			char* const ptr = strrchr(dirpath, PATH_SEPARATOR);
+			if(NULL != ptr) {
+				*ptr = 0;
+				dirpath_len = (int)(ptr - dirpath);
+			}
+			depth--;
+		}
+	}
+	return -1;
+}
+
+HANDLE usbdevfile_alloc_devfile(const char *devfile)
+{
+	if(NULL == devfile) {
+		return -EINVAL;
+	}
+
+	return usb_open(devfile);
+}
+
 /*EOF*/
