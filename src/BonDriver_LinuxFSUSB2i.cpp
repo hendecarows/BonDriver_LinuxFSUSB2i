@@ -178,12 +178,39 @@ const BOOL BonDriver::OpenTuner(void)
 	auto ret = it9175_create(&device_state_, &usb_endpoint_);
 	if (ret != 0) {
 		PLOGD << "failed to it9175_create ret = " << ret;
-		close(usb_endpoint_.fd);
-		usb_endpoint_.fd = -1;
-		return FALSE;
+		goto close_device;
+	}
+
+	// ストリーム受信スレッドの生成
+	ret = tsthread_create(&ts_thread_, &usb_endpoint_);
+	if (ret != 0) {
+		PLOGD << "failed to tsthread_create ret = " << ret;
+		goto close_device;
 	}
 
 	return TRUE;
+
+close_device:
+	if (ts_thread_) {
+		PLOGD << "tsthread_stop and tsthread_destroy";
+		tsthread_stop(ts_thread_);
+		tsthread_destroy(ts_thread_);
+		ts_thread_ = nullptr;
+	}
+
+	if (device_state_) {
+		PLOGD << "it9175_destroy";
+		it9175_destroy(device_state_);
+		device_state_ = nullptr;
+	}
+
+	if (usb_endpoint_.fd >= 0) {
+		PLOGD << "close usb device fd";
+		close(usb_endpoint_.fd);
+		usb_endpoint_.fd = -1;
+	}
+
+	return FALSE;
 }
 
 void BonDriver::CloseTuner(void)
@@ -287,13 +314,6 @@ const BOOL BonDriver::GetTsStream(BYTE **ppDst, DWORD *pdwSize, DWORD *pdwRemain
 		return FALSE;
 	}
 
-	auto ret = tsthread_readable(ts_thread_);
-	if (ret <= 0) {
-		*pdwSize = 0;
-		*pdwRemain = 0;
-		return TRUE;
-	}
-
 	*pdwSize = tsthread_read(ts_thread_, (void**)(ppDst));
 	*pdwRemain = GetReadyCount();
 
@@ -374,12 +394,6 @@ const BOOL BonDriver::SetChannel(const DWORD dwSpace, const DWORD dwChannel)
 		return FALSE;
 	}
 
-	// ストリーム受信スレッドの停止
-	if (ts_thread_) {
-		PLOGD << "tsthread_stop";
-		tsthread_stop(ts_thread_);
-	}
-
 	// チャンネル周波数変更
 	auto ret = it9175_setFreq(device_state_, freq);
 	PLOGD << "it9175_setFreq ret = " << ret;
@@ -410,20 +424,6 @@ const BOOL BonDriver::SetChannel(const DWORD dwSpace, const DWORD dwChannel)
 	if (!has_stream) {
 		PLOGD << "failed to it9175_waitStream ret = " << ret;
 		return FALSE;
-	}
-
-	if (!ts_thread_) {
-		// ストリーム受信スレッドの生成
-		ret = tsthread_create(&ts_thread_, &usb_endpoint_);
-		PLOGD << "tsthread_create ret = " << ret;
-		if (ret != 0) {
-			PLOGD << "failed to tsthread_create ret = " << ret;
-			return FALSE;
-		}
-	} else {
-		// ストリーム受信スレッドの開始
-		tsthread_start(ts_thread_);
-		PLOGD << "tsthread_start";
 	}
 
 	// 安定してストリームが転送されるようになるまでの初期ストリームを捨てる処理

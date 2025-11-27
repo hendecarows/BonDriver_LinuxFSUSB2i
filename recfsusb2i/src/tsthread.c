@@ -133,21 +133,14 @@ static void tsthread(void* const param)
 	}
 
 	for(;;) {
-		int num = TS_MaxNumIO;
-		for(i = 0; i < TS_MaxNumIO; i++) {
-			struct usbdevfs_urb* const  pUrb = ptrUrb + UrbSize * i;
-			if(! pUrb->buffer) {
-				if(ps->flags & 0x01) {
-					num--;
-				}else{
+		if(!(ps->flags & 0x01)) {
+			for(i = 0; i < TS_MaxNumIO; i++) {
+				struct usbdevfs_urb* const  pUrb = ptrUrb + UrbSize * i;
+				if(! pUrb->buffer) {
 					//# continue to issue a new URB request
 					submitNextURB(ps, pUrb);
 				}
 			}
-		}
-		if(0 >= num) {
-			//# no request
-			break;
 		}
 		if(ps->flags & 0x02) {
 			//# canceled
