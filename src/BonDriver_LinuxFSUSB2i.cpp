@@ -63,9 +63,11 @@ BonDriver::BonDriver(Config& config) :
 	// DebugLog
 	// 0 : 出力しない, それ以外: 出力する
 	// plog level : none = 0, fatal = 1, error = 2, warning = 3, info = 4, debug = 5, verbose = 6
-	val = sct.Get("DebugLog", 0);
-	val = (val == 0) ? 0 : 5;
-	plog::init<plog::TxtFormatter>(static_cast<plog::Severity>(val), plog::streamStdErr);
+	val = sct.Get("DebugLog", 2);
+	val = (val == 0) ? 2 : 5;
+	if (!plog::get()) {
+		plog::init<plog::TxtFormatter>(static_cast<plog::Severity>(val), plog::streamStdErr);
+	}
 	PLOGD << "plog init = " << plog::get()->getInstance();
 	PLOGD << "Config DebugLog = " << val;
 

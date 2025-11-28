@@ -57,9 +57,6 @@ set_target_properties(
 # Output Name (Remove "lib" prefix)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 
-# Define Macros
-target_compile_definitions(${PROJECT_NAME} PRIVATE PLOG_LOCAL)
-
 # Include Directory
 target_include_directories(
 	${PROJECT_NAME}
