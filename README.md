@@ -8,8 +8,8 @@ Linux版[EDCB][link_edcb]で使用することを目的に、trinity19683氏が�
 | :----- | :------------- | :----: | :----: | :-------------------------- |
 | KEIAN  | [KTV-FSUSB2/V3][link_fsusb2v3] | 0x0511 | 0x0046 | 販売終了 S/N:K1212以降  |
 | KEIAN  | [KTV-FSMINI][link_fsmini]     | 0x0511 | 0x0046 | 販売終了                    |
-| MyGica | [PT275][link_pt275]       | 0x048d | 0x9175 |                             |
-| MyGica | [PT275C][link_pt275c]       | 0x048d | 0xe275 |                             |
+<!-- | ~~MyGica~~ | ~~[PT275][link_pt275]~~       | ~~0x048d~~ | ~~0x9175~~ |                             |
+| ~~MyGica~~ | ~~[PT275C][link_pt275c]~~       | ~~0x048d~~ | ~~0xe275~~ |                             | -->
 
 BonDriver化にあたり、[recfsusb2i][link_wiki]とnns779氏の[BonDriver_LinuxPTX][link_bonptx]のソースファイルをほぼそのまま使用しています。
 
